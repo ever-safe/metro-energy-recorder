@@ -103,11 +103,9 @@ const ocr=createPPOcrV5({
   detectionModelPath:"det_mobile.onnx",recognitionModelPath:"rec_mobile.onnx",
   dictionaryUrl:"./models/ppocrv5_dict.txt",
   wasmPaths:"./wasm/",cacheModels:true,providerPreference:"wasm",
-  wasmThreads:self.crossOriginIsolated?Math.min(navigator.hardwareConcurrency||4,8):1,
+  wasmThreads:1,
 });
-document.getElementById("env").textContent=self.crossOriginIsolated
-  ?"多核已启用（"+Math.min(navigator.hardwareConcurrency||4,8)+"线程）"
-  :"首次加载后可添加到桌面，离线使用";
+document.getElementById("env").textContent="单线程模式 · 首次加载约1分钟 · 加载完可添加到桌面离线使用";
 
 // ---------- 预处理：裁黑边+限长 ----------
 async function preprocess(file){
