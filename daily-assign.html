@@ -2,6 +2,8 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>日检车辆智能分配工具</title>
 <style>
@@ -344,11 +346,11 @@ function assignCars(cars){
   const used=new Set(gA.map(keyOf));
   const remainA=segA.filter(c=>!used.has(keyOf(c)));
 
-  // 驻站+搭档：6-8分，优先拿简单任务（日检C/八日检/自检），从A段剩余+B段选
+  // 驻站+搭档：4-5分，优先拿简单任务（日检C/八日检/自检），从A段剩余+B段选
   const pool=[...remainA,...segB].sort((a,b)=>a.score-b.score);
   const gS=[];let sS=0;
-  for(const c of pool){if(sS+c.score<=8.5){gS.push(c);sS+=c.score;}if(sS>=6)break;}
-  if(sS<6){for(const c of pool){if(!gS.includes(c)){gS.push(c);sS+=c.score;if(sS>=6)break;}}}
+  for(const c of pool){if(sS+c.score<=5.5){gS.push(c);sS+=c.score;}if(sS>=4)break;}
+  if(sS<4){for(const c of pool){if(!gS.includes(c)){gS.push(c);sS+=c.score;if(sS>=4)break;}}}
   const usedS=new Set(gS.map(keyOf));
 
   const remain=cars.filter(c=>!used.has(keyOf(c))&&!usedS.has(keyOf(c)));
@@ -384,7 +386,7 @@ document.getElementById('assignBtn').addEventListener('click',()=>{
 function renderResult(r){
   const groups=[
     {cls:'ga',name:'段A',sub:'2人作业',data:r.groupA,target:'目标 3-4 分'},
-    {cls:'gb',name:'驻站+搭档',sub:'2人作业',data:r.station,target:'目标 6-8 分'},
+    {cls:'gb',name:'驻站+搭档',sub:'2人作业',data:r.station,target:'目标 4-5 分'},
     {cls:'gc',name:'段B',sub:'2人作业',data:r.groupB,target:'与段C均衡'},
     {cls:'gd',name:'段C',sub:'2人作业',data:r.groupC,target:'与段B均衡'}
   ];
