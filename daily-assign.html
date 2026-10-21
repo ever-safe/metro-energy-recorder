@@ -18,15 +18,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 .header h1{font-size:18px;font-weight:700;margin-bottom:3px}
 .header p{font-size:12px;opacity:.85;line-height:1.5}
 .steps{display:flex;gap:6px;margin-top:14px}
-.step{flex:1;background:rgba(255,255,255,.18);border-radius:8px;padding:7px 4px;text-align:center;font-size:11px;border:1px solid rgba(255,255,255,.25)}
+.step{flex:1;background:rgba(255,255,255,.18);border-radius:8px;padding:8px 4px;text-align:center;font-size:11px;border:1px solid rgba(255,255,255,.25);white-space:nowrap}
 .step.active{background:rgba(255,255,255,.4);border-color:rgba(255,255,255,.6);font-weight:600}
 .step .num{display:inline-block;width:16px;height:16px;line-height:16px;border-radius:50%;background:rgba(255,255,255,.25);font-size:10px;margin-right:2px}
 
 .container{padding:10px;max-width:900px;margin:0 auto}
 
 /* 卡片 */
-.card{background:var(--card);border-radius:var(--radius);padding:12px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.05)}
-.card-title{font-size:14px;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.card{background:var(--card);border-radius:var(--radius);padding:14px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.card-title{font-size:14px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:6px}
 .card-title::before{content:'';width:3px;height:14px;border-radius:2px;background:var(--primary);display:inline-block}
 
 /* 统计 */
@@ -37,7 +37,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 .stat.total .val{color:var(--primary)}
 
 /* 上传区 */
-.upload-area{border:2px dashed #d0d7e2;border-radius:10px;padding:24px 12px;text-align:center;background:#fafbfc;cursor:pointer;transition:.15s}
+.upload-area{display:block;border:2px dashed #b8c2d4;border-radius:12px;padding:28px 16px;text-align:center;background:#fafbfc;cursor:pointer;transition:.15s;margin:4px 0}
 .upload-area:active{border-color:var(--primary);background:#f0f5ff}
 .upload-area .icon{font-size:32px;margin-bottom:6px}
 .upload-area .t1{font-size:13px;font-weight:600;color:var(--primary)}
