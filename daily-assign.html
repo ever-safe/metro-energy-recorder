@@ -2,117 +2,110 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>日检车辆智能分配工具</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{
-  --bg:#f0f2f5;--card:#fff;--primary:#1677ff;--primary-dark:#0958d9;
+  --bg:#f0f2f5;--card:#fff;--primary:#1677ff;
   --a:#1677ff;--b:#722ed1;--c:#13c2c2;--d:#fa8c16;
-  --text:#1f2937;--sub:#6b7280;--line:#e5e7eb;--radius:12px;
+  --text:#1f2937;--sub:#6b7280;--line:#eef0f3;--radius:12px;
 }
-body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px}
 
-/* 顶部标题栏 */
-.header{background:linear-gradient(135deg,#1677ff 0%,#722ed1 100%);color:#fff;padding:20px 16px 24px;position:relative;overflow:hidden}
-.header::after{content:'';position:absolute;right:-40px;top:-40px;width:160px;height:160px;border-radius:50%;background:rgba(255,255,255,.08)}
-.header::before{content:'';position:absolute;right:40px;bottom:-60px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.06)}
-.header h1{font-size:20px;font-weight:700;margin-bottom:4px;position:relative;z-index:1}
-.header p{font-size:12px;opacity:.85;position:relative;z-index:1}
-.steps{display:flex;gap:8px;margin:16px 16px 0;position:relative;z-index:1}
-.step{flex:1;background:rgba(255,255,255,.2);backdrop-filter:blur(4px);border-radius:8px;padding:8px;text-align:center;font-size:11px;border:1px solid rgba(255,255,255,.3)}
-.step.active{background:rgba(255,255,255,.35);border-color:#fff}
-.step .num{display:inline-block;width:18px;height:18px;line-height:18px;border-radius:50%;background:rgba(255,255,255,.3);font-weight:bold;margin-right:2px}
+/* 头部 */
+.header{background:linear-gradient(135deg,#1677ff 0%,#722ed1 100%);color:#fff;padding:16px 14px 18px}
+.header h1{font-size:18px;font-weight:700;margin-bottom:3px}
+.header p{font-size:12px;opacity:.85;line-height:1.5}
+.steps{display:flex;gap:6px;margin-top:14px}
+.step{flex:1;background:rgba(255,255,255,.18);border-radius:8px;padding:7px 4px;text-align:center;font-size:11px;border:1px solid rgba(255,255,255,.25)}
+.step.active{background:rgba(255,255,255,.4);border-color:rgba(255,255,255,.6);font-weight:600}
+.step .num{display:inline-block;width:16px;height:16px;line-height:16px;border-radius:50%;background:rgba(255,255,255,.25);font-size:10px;margin-right:2px}
 
-.container{max-width:1000px;margin:0 auto;padding:12px}
-
-/* 统计卡片 */
-.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:12px}
-.stat{background:var(--card);border-radius:var(--radius);padding:14px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
-.stat .label{font-size:12px;color:var(--sub);margin-bottom:6px}
-.stat .val{font-size:22px;font-weight:700}
-.stat.total .val{color:var(--primary)}
-.stat.a .val{color:var(--a)}
-.stat.b .val{color:var(--b)}
-.stat.c .val{color:var(--c)}
-.stat.d .val{color:var(--d)}
+.container{padding:10px;max-width:900px;margin:0 auto}
 
 /* 卡片 */
-.card{background:var(--card);border-radius:var(--radius);padding:14px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
-.card-title{font-size:15px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:8px}
-.card-title::before{content:'';width:4px;height:16px;border-radius:2px;background:var(--primary)}
+.card{background:var(--card);border-radius:var(--radius);padding:12px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.card-title{font-size:14px;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.card-title::before{content:'';width:3px;height:14px;border-radius:2px;background:var(--primary);display:inline-block}
+
+/* 统计 */
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:10px}
+.stat{background:linear-gradient(135deg,#f8faff,#f0f5ff);border-radius:10px;padding:10px 12px;border:1px solid #e6f0ff}
+.stat .label{font-size:11px;color:var(--sub);margin-bottom:3px}
+.stat .val{font-size:20px;font-weight:700}
+.stat.total .val{color:var(--primary)}
 
 /* 上传区 */
-.upload-area{border:2px dashed #d9d9d9;border-radius:10px;padding:28px 16px;text-align:center;transition:.2s;cursor:pointer;background:#fafafa}
-.upload-area:hover{border-color:var(--primary);background:#f0f5ff}
-.upload-area .icon{font-size:36px;margin-bottom:8px}
-.upload-area .tip{font-size:13px;color:var(--sub)}
-.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.upload-area{border:2px dashed #d0d7e2;border-radius:10px;padding:24px 12px;text-align:center;background:#fafbfc;cursor:pointer;transition:.15s}
+.upload-area:active{border-color:var(--primary);background:#f0f5ff}
+.upload-area .icon{font-size:32px;margin-bottom:6px}
+.upload-area .t1{font-size:13px;font-weight:600;color:var(--primary)}
+.upload-area .t2{font-size:11px;color:var(--sub);margin-top:3px}
 
 /* 按钮 */
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 18px;border:none;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;transition:.2s}
-.btn-primary{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;box-shadow:0 2px 6px rgba(22,119,255,.3)}
-.btn-primary:hover{transform:translateY(-1px);box-shadow:0 4px 10px rgba(22,119,255,.4)}
-.btn-primary:disabled{background:#bfbfbf;box-shadow:none;cursor:not-allowed;transform:none}
-.btn-default{background:#fff;color:var(--text);border:1px solid var(--line)}
-.btn-default:hover{border-color:var(--primary);color:var(--primary)}
-.btn-success{background:linear-gradient(135deg,#52c41a,#389e0d);color:#fff}
-.btn-gray{background:#f0f0f0;color:var(--text)}
+.btn-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 16px;border:none;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;transition:.15s;white-space:nowrap}
+.btn-primary{background:linear-gradient(135deg,#1677ff,#4096ff);color:#fff;box-shadow:0 2px 6px rgba(22,119,255,.3)}
+.btn-primary:active{transform:scale(.97)}
+.btn-default{background:#f5f5f5;color:var(--text);border:1px solid var(--line)}
+.btn-success{background:linear-gradient(135deg,#52c41a,#73d13d);color:#fff;box-shadow:0 2px 6px rgba(82,196,26,.3)}
 
 /* 状态 */
-.status{margin-top:12px;padding:10px 14px;border-radius:8px;font-size:13px;background:#f0f5ff;color:var(--primary)}
+.status{margin-top:10px;padding:9px 12px;border-radius:8px;font-size:12px;background:#f0f5ff;color:var(--primary);line-height:1.5}
 .status.err{background:#fff2f0;color:#ff4d4f}
 
 /* 表格 */
-table{width:100%;border-collapse:collapse;font-size:13px;border-radius:8px;overflow:hidden}
-thead th{background:#fafafa;font-weight:600;padding:10px 6px;border-bottom:2px solid var(--line);color:var(--sub);text-align:center}
-tbody td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:center}
-tbody tr:hover{background:#fafbff}
-input.cell,select{padding:6px 8px;border:1px solid #e5e7eb;border-radius:6px;font-size:13px;width:100%;background:#fff}
-input.cell:focus,select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 2px rgba(22,119,255,.15)}
-.row-del{color:#ff4d4f;cursor:pointer;font-size:13px;padding:4px 8px;border-radius:4px}
-.row-del:hover{background:#fff1f0}
+.table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:8px;border:1px solid var(--line)}
+table{width:100%;border-collapse:collapse;font-size:13px;min-width:360px}
+thead th{background:#fafafa;font-weight:600;padding:9px 6px;border-bottom:1px solid var(--line);color:var(--sub);white-space:nowrap}
+tbody td{padding:7px 6px;border-bottom:1px solid var(--line);text-align:center}
+tbody tr:last-child td{border-bottom:none}
+input.cell,select{padding:5px 6px;border:1px solid #e5e7eb;border-radius:6px;font-size:13px;width:100%;background:#fff;text-align:center}
+input.cell:focus,select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 2px rgba(22,119,255,.12)}
+.row-del{color:#ff4d4f;cursor:pointer;font-size:12px}
 
-/* 类型标签 */
-.tag{display:inline-block;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:600}
+/* 标签 */
+.tag{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;white-space:nowrap}
 .tag-a{background:#fff1f0;color:#cf1322}
 .tag-b{background:#fff7e6;color:#d46b08}
 .tag-c{background:#fffbe6;color:#d48806}
 .tag-8{background:#e6fffb;color:#08979c}
 .tag-z{background:#f6ffed;color:#389e0d}
 
-/* 分配结果卡片 */
-.result-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
-.group-card{border-radius:var(--radius);overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08)}
-.group-head{padding:12px 14px;color:#fff;display:flex;justify-content:space-between;align-items:center}
-.group-head .name{font-weight:600;font-size:15px}
-.group-head .score{font-size:13px;opacity:.95}
-.group-body{padding:10px;background:#fff}
-.group-body table{font-size:12px}
-.group-body td{padding:5px 4px}
+/* 分组结果 */
+.result-grid{display:grid;grid-template-columns:1fr;gap:10px}
+@media(min-width:600px){.result-grid{grid-template-columns:repeat(2,1fr)}}
+.group-card{border-radius:var(--radius);overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.group-head{padding:10px 12px;color:#fff;display:flex;justify-content:space-between;align-items:center}
+.group-head .name{font-weight:600;font-size:14px}
+.group-head .sub{font-size:11px;opacity:.85;margin-top:1px}
+.group-head .score{text-align:right;font-size:13px;font-weight:600}
+.group-head .score small{font-size:10px;opacity:.85;font-weight:400}
+.group-body{padding:8px;background:#fff}
+.group-body table{font-size:12px;min-width:0}
+.group-body td{padding:4px 3px}
 .ga .group-head{background:linear-gradient(135deg,#1677ff,#4096ff)}
 .gb .group-head{background:linear-gradient(135deg,#722ed1,#9254de)}
 .gc .group-head{background:linear-gradient(135deg,#13c2c2,#36cfc9)}
 .gd .group-head{background:linear-gradient(135deg,#fa8c16,#ffa940)}
+.bar{height:5px;background:#f0f0f0;border-radius:3px;margin-top:8px;overflow:hidden}
+.bar-inner{height:100%;border-radius:3px;transition:width .5s}
 
-/* 平衡状态 */
-.balance{margin-top:14px;padding:14px;border-radius:10px;text-align:center;font-size:14px;font-weight:500}
+/* 均衡提示 */
+.balance{margin-top:12px;padding:12px;border-radius:10px;text-align:center;font-size:13px;font-weight:500;line-height:1.6}
 .balance.ok{background:linear-gradient(135deg,#f6ffed,#d9f7be);color:#389e0d;border:1px solid #b7eb8f}
 .balance.warn{background:linear-gradient(135deg,#fff2f0,#ffccc7);color:#cf1322;border:1px solid #ffa39e}
 
-/* 空状态 */
-.empty{text-align:center;padding:20px;color:#bfbfbf;font-size:13px}
-
-/* 进度条 */
-.bar{height:6px;background:#f0f0f0;border-radius:3px;margin-top:6px;overflow:hidden}
-.bar-inner{height:100%;border-radius:3px;transition:width .5s}
+/* 空 */
+.empty{text-align:center;padding:16px;color:#bfbfbf;font-size:13px}
 </style>
 </head>
 <body>
 
 <div class="header">
   <h1>🚇 日检车辆智能分配工具</h1>
-  <p>批量识别车载屏照片，自动按分值均衡分配到各作业段</p>
+  <p>批量识别日检表图片，自动按分值均衡分配到各作业段</p>
   <div class="steps">
     <div class="step active"><span class="num">1</span>上传图片</div>
     <div class="step"><span class="num">2</span>核对数据</div>
@@ -126,12 +119,12 @@ input.cell:focus,select:focus{outline:none;border-color:var(--primary);box-shado
     <div class="card-title">上传日检表图片</div>
     <label class="upload-area" for="fileInput">
       <div class="icon">📷</div>
-      <div><strong>点击选择图片</strong>（可多选）</div>
-      <div class="tip">支持DCC下发的日检车股道表截图</div>
+      <div class="t1">点击选择图片（可多选）</div>
+      <div class="t2">支持DCC下发的日检车股道表截图</div>
     </label>
     <input type="file" id="fileInput" accept="image/*" multiple style="display:none">
     <div class="btn-row">
-      <button class="btn btn-gray" id="addRowBtn">+ 手动添加车辆</button>
+      <button class="btn btn-default" id="addRowBtn">+ 手动添加车辆</button>
     </div>
     <div class="status" id="status">正在加载识别模型，请稍候…</div>
   </div>
@@ -139,7 +132,7 @@ input.cell:focus,select:focus{outline:none;border-color:var(--primary);box-shado
   <div class="card" id="tableCard" style="display:none">
     <div class="card-title">识别结果核对</div>
     <div class="stats" id="miniStats"></div>
-    <div style="overflow-x:auto">
+    <div class="table-wrap">
     <table id="dataTable">
       <thead><tr><th>股道</th><th>车号</th><th>日检类型</th><th>分值</th><th>操作</th></tr></thead>
       <tbody></tbody>
@@ -154,7 +147,7 @@ input.cell:focus,select:focus{outline:none;border-color:var(--primary);box-shado
     <div class="card-title">分配结果</div>
     <div class="result-grid" id="resultGrid"></div>
     <div class="balance" id="balanceBox"></div>
-    <div class="btn-row" style="justify-content:center;margin-top:14px">
+    <div class="btn-row" style="justify-content:center;margin-top:12px">
       <button class="btn btn-primary" id="copyBtn">📋 复制分配结果</button>
     </div>
   </div>
@@ -162,10 +155,10 @@ input.cell:focus,select:focus{outline:none;border-color:var(--primary);box-shado
 </div>
 
 <script type="importmap">
-{"imports":{"ppocrv5":"./lib/ppocrv5@0.5.0/dist/index.js"}}
+{ "imports": { "onnxruntime-web": "./ort.min.mjs" } }
 </script>
 <script type="module">
-import { createPPOcrV5 } from 'ppocrv5';
+import { createPPOcrV5 } from "./ffocr.mjs";
 
 const SCORES={'日检A':4,'日检B':2,'日检C':1,'八日检':0.5,'自检':0.5};
 const TYPE_KEYS=Object.keys(SCORES);
@@ -295,7 +288,7 @@ function updateMiniStats(){
   const total=cars.reduce((s,c)=>s+c.score,0);
   const byType={};cars.forEach(c=>byType[c.type]=(byType[c.type]||0)+1);
   let html=`<div class="stat total"><div class="label">车辆总数</div><div class="val">${cars.length}</div></div>`;
-  html+=`<div class="stat"><div class="label">总分值</div><div class="val" style="color:var(--primary)">${total.toFixed(1)}</div></div>`;
+  html+=`<div class="stat"><div class="label">总分值</div><div class="val">${total.toFixed(1)}</div></div>`;
   for(const t of TYPE_KEYS){html+=`<div class="stat"><div class="label">${t}</div><div class="val" style="font-size:18px">${byType[t]||0}</div></div>`;}
   document.getElementById('miniStats').innerHTML=html;
 }
@@ -371,23 +364,24 @@ function renderResult(r){
     {cls:'gc',name:'段B',sub:'2人作业',data:r.groupB,target:'与段C均衡'},
     {cls:'gd',name:'段C',sub:'2人作业',data:r.groupC,target:'与段B均衡'}
   ];
+  const maxScore=Math.max(r.groupA.score,r.station.score,r.groupB.score,r.groupC.score,1);
   let html='';
   for(const g of groups){
-    const maxScore=Math.max(r.groupA.score,r.station.score,r.groupB.score,r.groupC.score,1);
     const pct=Math.round(g.data.score/maxScore*100);
+    const barColor=g.cls==='ga'?'var(--a)':g.cls==='gb'?'var(--b)':g.cls==='gc'?'var(--c)':'var(--d)';
     html+=`<div class="group-card ${g.cls}">
       <div class="group-head">
-        <div><div class="name">${g.name}</div><div style="font-size:11px;opacity:.8">${g.sub}</div></div>
-        <div class="score">${g.data.score.toFixed(1)} 分<br><span style="font-size:11px">${g.data.cars.length}辆 · ${g.target}</span></div>
+        <div><div class="name">${g.name}</div><div class="sub">${g.sub}</div></div>
+        <div class="score">${g.data.score.toFixed(1)} 分<br><small>${g.data.cars.length}辆 · ${g.target}</small></div>
       </div>
       <div class="group-body">
         <table><tbody>`;
     if(g.data.cars.length){
       for(const c of g.data.cars)html+=`<tr><td>${c.track}</td><td><strong>${c.carNo}</strong></td><td><span class="tag ${tagClass(c.type)}">${c.type}</span></td><td>${c.score}</td></tr>`;
     }else{
-      html+=`<tr><td colspan="4" style="color:#bfbfbf;padding:12px">无</td></tr>`;
+      html+=`<tr><td colspan="4" style="color:#bfbfbf;padding:10px">无</td></tr>`;
     }
-    html+=`</tbody></table><div class="bar"><div class="bar-inner" style="width:${pct}%;background:${g.cls==='ga'?'var(--a)':g.cls==='gb'?'var(--b)':g.cls==='gc'?'var(--c)':'var(--d)'}"></div></div></div></div>`;
+    html+=`</tbody></table><div class="bar"><div class="bar-inner" style="width:${pct}%;background:${barColor}"></div></div></div></div>`;
   }
   document.getElementById('resultGrid').innerHTML=html;
   const diff=Math.abs(r.groupB.score-r.groupC.score);
