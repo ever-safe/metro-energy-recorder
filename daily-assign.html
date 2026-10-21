@@ -223,7 +223,7 @@ function parseTable(lines,imgW,imgH){
   const cars=[];
   for(let c=0;c<3;c++){
     const col=cols[c].slice().sort((a,b)=>bboxY(a)-bboxY(b));
-    const rowH=Math.max(22,imgH/16*0.55);
+    const rowH=Math.max(30,imgH/14);
     const rows=[];
     for(const line of col){
       const y=bboxY(line);let placed=false;
@@ -363,13 +363,13 @@ function assignCars(cars){
   let sB=gB.reduce((s,c)=>s+c.score,0);
   let sC=gC.reduce((s,c)=>s+c.score,0);
 
-  for(let iter=0;iter<30&&Math.abs(sB-sC)>1;iter++){
+  for(let iter=0;iter<50&&Math.abs(sB-sC)>1;iter++){
     if(sB>sC){
-      const cand=gB.filter(c=>c.col!==0).sort((a,b)=>a.score-b.score);let moved=false;
+      const cand=gB.slice().sort((a,b)=>a.score-b.score);let moved=false;
       for(const c of cand){if(Math.abs((sB-c.score)-(sC+c.score))<Math.abs(sB-sC)){gB=gB.filter(x=>x!==c);gC.push(c);sB-=c.score;sC+=c.score;moved=true;break;}}
       if(!moved)break;
     }else{
-      const cand=gC.filter(c=>c.col!==2).sort((a,b)=>a.score-b.score);let moved=false;
+      const cand=gC.slice().sort((a,b)=>a.score-b.score);let moved=false;
       for(const c of cand){if(Math.abs((sC-c.score)-(sB+c.score))<Math.abs(sB-sC)){gC=gC.filter(x=>x!==c);gB.push(c);sC-=c.score;sB+=c.score;moved=true;break;}}
       if(!moved)break;
     }
