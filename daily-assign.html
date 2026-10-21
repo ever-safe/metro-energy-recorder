@@ -231,18 +231,20 @@ function parseTable(lines,imgW,imgH){
       if(!placed)rows.push({y,lines:[line]});
     }
     for(const row of rows){
-      let track=null,carNo=null,type=null;
-      for(const l of row.lines){
-        const txt=l.text||'';
-        if(!track)track=matchTrack(txt);
-        if(!carNo)carNo=matchCarNo(txt);
-        if(!type)type=matchType(txt);
-      }
+      const allText=row.lines.map(l=>(l.text||'').replace(/\s/g,'')).join('');
+      const track=matchTrack(allText);
+      const carNo=matchCarNo(allText);
+      const type=matchType(allText);
       if(type&&type!=='里程修'&&carNo){
         cars.push({track:track||'',carNo,type,score:SCORES[type]||0,col:c});
       }
     }
   }
+  cars.sort((a,b)=>{
+    if(a.col!==b.col)return a.col-b.col;
+    const ta=parseInt(a.track)||99,tb=parseInt(b.track)||99;
+    return ta-tb;
+  });
   return cars;
 }
 
