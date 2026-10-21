@@ -105,7 +105,7 @@ input.cell:focus,select:focus{outline:none;border-color:var(--primary);box-shado
 
 <div class="header">
   <h1>🚇 日检车辆智能分配工具</h1>
-  <p>批量识别日检表图片，自动按分值均衡分配到各作业段</p>
+  <p>识别日检表图片，自动按分值均衡分配到各作业段</p>
   <div class="steps">
     <div class="step active"><span class="num">1</span>上传图片</div>
     <div class="step"><span class="num">2</span>核对数据</div>
@@ -311,7 +311,7 @@ function updateMiniStats(){
   const total=cars.reduce((s,c)=>s+c.score,0);
   const byType={};cars.forEach(c=>byType[c.type]=(byType[c.type]||0)+1);
   let html=`<div class="stat total"><div class="label">车辆总数</div><div class="val">${cars.length}</div></div>`;
-  html+=`<div class="stat"><div class="label">总分值</div><div class="val">${total.toFixed(1)}</div></div>`;
+  html+=`<div class="stat"><div class="label">总分值</div><div class="val">${Math.round(total)}</div></div>`;
   for(const t of TYPE_KEYS){html+=`<div class="stat"><div class="label">${t}</div><div class="val" style="font-size:18px">${byType[t]||0}</div></div>`;}
   document.getElementById('miniStats').innerHTML=html;
 }
@@ -395,7 +395,7 @@ function renderResult(r){
     html+=`<div class="group-card ${g.cls}">
       <div class="group-head">
         <div><div class="name">${g.name}</div><div class="sub">${g.sub}</div></div>
-        <div class="score">${g.data.score.toFixed(1)} 分<br><small>${g.data.cars.length}辆 · ${g.target}</small></div>
+        <div class="score">${Math.round(g.data.score)} 分<br><small>${g.data.cars.length}辆 · ${g.target}</small></div>
       </div>
       <div class="group-body">
         <table><tbody>`;
@@ -411,8 +411,8 @@ function renderResult(r){
   const box=document.getElementById('balanceBox');
   box.className='balance '+(diff<=1?'ok':'warn');
   box.innerHTML=diff<=1
-    ?`✅ 段B <strong>${r.groupB.score.toFixed(1)}</strong> 分 vs 段C <strong>${r.groupC.score.toFixed(1)}</strong> 分，差值 <strong>${diff.toFixed(1)}</strong> 分，符合均衡要求`
-    :`⚠️ 段B <strong>${r.groupB.score.toFixed(1)}</strong> 分 vs 段C <strong>${r.groupC.score.toFixed(1)}</strong> 分，差值 <strong>${diff.toFixed(1)}</strong> 分，超出1分`;
+    ?`✅ 段B <strong>${Math.round(r.groupB.score)}</strong> 分 vs 段C <strong>${Math.round(r.groupC.score)}</strong> 分，差值 <strong>${Math.round(diff)}</strong> 分，符合均衡要求`
+    :`⚠️ 段B <strong>${Math.round(r.groupB.score)}</strong> 分 vs 段C <strong>${Math.round(r.groupC.score)}</strong> 分，差值 <strong>${Math.round(diff)}</strong> 分，超出1分`;
   document.getElementById('resultCard').style.display='block';
   document.getElementById('resultCard').scrollIntoView({behavior:'smooth'});
 }
