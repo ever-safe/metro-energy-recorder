@@ -158,7 +158,11 @@ input.cell:focus,select:focus{outline:none;border-color:var(--primary);box-shado
 { "imports": { "onnxruntime-web": "./ort.min.mjs" } }
 </script>
 <script type="module">
+import * as ort from "onnxruntime-web";
 import { createPPOcrV5 } from "./ffocr.mjs";
+if("serviceWorker" in navigator){
+  navigator.serviceWorker.register("./sw.js").catch(()=>{});
+}
 
 const SCORES={'日检A':4,'日检B':2,'日检C':1,'八日检':0.5,'自检':0.5};
 const TYPE_KEYS=Object.keys(SCORES);
@@ -170,8 +174,20 @@ async function initOcr(){
       baseUrl:"./models",modelVariant:"mobile",
       detectionModelPath:"det_mobile.onnx",recognitionModelPath:"rec_mobile.onnx",
       dictionaryUrl:"./models/ppocrv5_dict.txt",
-      wasmPaths:"./wasm/",cacheModels:true,providerPreference:"wasm",wasmThreads:1,
+      wasmPaths:"./wasm/",cacheModels:true,providerPreference:"wasm",
+      wasmThreads:self.crossOriginIsolated?Math.min(navigator.hardwareConcurrency||4,8):1,
     });
+    // 仓库只有 threaded 版本 wasm，把 ort 期望的所有文件名映射过去
+    ort.env.wasm.wasmPaths={
+      "ort-wasm.wasm":"./wasm/ort-wasm-simd-threaded.wasm",
+      "ort-wasm-simd.wasm":"./wasm/ort-wasm-simd-threaded.wasm",
+      "ort-wasm-threads.wasm":"./wasm/ort-wasm-simd-threaded.wasm",
+      "ort-wasm-simd-threads.wasm":"./wasm/ort-wasm-simd-threaded.wasm",
+      "ort-wasm-simd-threaded.wasm":"./wasm/ort-wasm-simd-threaded.wasm",
+      "ort-wasm.jsep.wasm":"./wasm/ort-wasm-simd-threaded.jsep.wasm",
+      "ort-wasm-simd.jsep.wasm":"./wasm/ort-wasm-simd-threaded.jsep.wasm",
+      "ort-wasm-simd-threaded.jsep.wasm":"./wasm/ort-wasm-simd-threaded.jsep.wasm",
+    };
     await ocr.init();ocrReady=true;
     setStatus('✅ 模型加载完成，可选择图片识别');
   }catch(e){setStatus('❌ 模型加载失败：'+e.message,true);}
