@@ -160,9 +160,6 @@ input.cell:focus,select:focus{outline:none;border-color:var(--primary);box-shado
 <script type="module">
 import * as ort from "onnxruntime-web";
 import { createPPOcrV5 } from "./ffocr.mjs";
-if("serviceWorker" in navigator){
-  navigator.serviceWorker.register("./sw.js").catch(()=>{});
-}
 
 const SCORES={'日检A':4,'日检B':2,'日检C':1,'八日检':0.5,'自检':0.5};
 const TYPE_KEYS=Object.keys(SCORES);
