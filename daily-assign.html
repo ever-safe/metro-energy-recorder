@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>日检车辆智能分配工具</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC",sans-serif;background:#f5f5f5;color:#333;padding:12px;max-width:1000px;margin:0 auto}
+h1{font-size:18px;text-align:center;margin:8px 0 12px}
+.card{background:#fff;border-radius:8px;padding:12px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.btn{display:inline-block;padding:8px 16px;border:none;border-radius:6px;background:#1677ff;color:#fff;cursor:pointer;font-size:14px;margin:4px}
+.btn:disabled{background:#ccc;cursor:not-allowed}
+.btn-green{background:#52c41a}.btn-orange{background:#fa8c16}.btn-gray{background:#8c8c8c}
+input[type=file]{display:none}
+table{width:100%;border-collapse:collapse;font-size:13px;margin:6px 0}
+th,td{border:1px solid #e0e0e0;padding:6px 4px;text-align:center}
+th{background:#fafafa;font-weight:600}
+.tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:12px;font-weight:bold}
+.tag-a{background:#ff4d4f;color:#fff}.tag-b{background:#fa8c16;color:#fff}
+.tag-c{background:#faad14;color:#fff}.tag-8{background:#13c2c2;color:#fff}.tag-z{background:#52c41a;color:#fff}
+.group-title{font-weight:bold;font-size:15px;margin:10px 0 4px;color:#1677ff}
+.score{font-size:13px;color:#666;margin-left:8px;font-weight:normal}
+.warn{color:#ff4d4f;font-weight:bold}.ok{color:#52c41a;font-weight:bold}
+select,input.cell{padding:4px 6px;border:1px solid #d9d9d9;border-radius:4px;font-size:13px;width:100%}
+.row-del{color:#ff4d4f;cursor:pointer;font-size:13px}
+#status{margin-top:8px;font-size:13px;color:#666;min-height:18px}
+</style>
+</head>
+<body>
+<h1>日检车辆智能分配工具</h1>
+
+<div class="card">
+  <input type="file" id="fileInput" accept="image/*" multiple>
+  <label for="fileInput" class="btn">选择图片（可多选）</label>
+  <button class="btn btn-gray" id="addRowBtn">+ 手动添加</button>
+  <div id="status">正在加载识别模型，请稍候…</div>
+</div>
+
+<div class="card" id="tableCard" style="display:none">
+  <div class="group-title">识别结果（可手动修改核对）</div>
+  <table id="dataTable">
+    <thead><tr><th style="width:18%">股道</th><th style="width:20%">车号</th><th style="width:30%">日检类型</th><th style="width:12%">分值</th><th style="width:10%">操作</th></tr></thead>
+    <tbody></tbody>
+  </table>
+  <div style="text-align:right;margin-top:8px">
+    <span id="totalInfo" style="font-size:13px;color:#666;margin-right:12px"></span>
+    <button class="btn btn-green" id="assignBtn">一键自动分配</button>
+  </div>
+</div>
+
+<div class="card" id="resultCard" style="display:none">
+  <div class="group-title">分配结果</div>
+  <div id="resultContent"></div>
+  <div style="margin-top:10px"><button class="btn" id="copyBtn">复制分配结果</button></div>
+</div>
+
+<script type="importmap">
+{"imports":{"ppocrv5":"./lib/ppocrv5@0.5.0/dist/index.js"}}
+</script>
+<script type="module">
+import { createPPOcrV5 } from 'ppocrv5';
+
+const SCORES={'日检A':4,'日检B':2,'日检C':1,'八日检':0.5,'自检':0.5};
+const TYPE_KEYS=Object.keys(SCORES);
+let ocr=null,ocrReady=false;
+
+async function initOcr(){
+  try{
+    ocr=createPPOcrV5({
+      baseUrl:"./models",modelVariant:"mobile",
+      detectionModelPath:"det_mobile.onnx",recognitionModelPath:"rec_mobile.onnx",
+      dictionaryUrl:"./models/ppocrv5_dict.txt",
+      wasmPaths:"./wasm/",cacheModels:true,providerPreference:"wasm",wasmThreads:1,
+    });
+    await ocr.init();ocrReady=true;
+    setStatus('模型加载完成，可选择图片识别');
+  }catch(e){setStatus('模型加载失败：'+e.message,true);}
+}
+initOcr();
+
+function setStatus(msg,isErr){const el=document.getElementById('status');el.textContent=msg;el.style.color=isErr?'#ff4d4f':'#666';}
+
+function matchType(t){
+  t=t.replace(/\s/g,'');
+  if(/八/.test(t)&&/日/.test(t))return'八日检';
+  if(/自/.test(t)&&/检/.test(t))return'自检';
+  if(/日[检檢]?\s*A/.test(t)||/日\s*A/.test(t))return'日检A';
+  if(/日[检檢]?\s*B/.test(t)||/日\s*B/.test(t))return'日检B';
+  if(/日[检檢]?\s*C/.test(t)||/日\s*C/.test(t))return'日检C';
+  if(/里程/.test(t))return'里程修';
+  return null;
+}
+function matchCarNo(t){const m=t.match(/01(\d{2})/);if(m){const n=parseInt(m[1]);if(n>=1&&n<=67)return'01'+m[1];}return null;}
+function matchTrack(t){const m=t.match(/(\d{1,2})\s*([ABC])/);if(m)return(m[1].padStart(2,'0'))+m[2];return null;}
+
+function bboxY(line){const ys=line.bbox.map(p=>p[1]??p.y);return Math.min(...ys);}
+function bboxX(line){const xs=line.bbox.map(p=>p[0]??p.x);return(Math.min(...xs)+Math.max(...xs))/2;}
+
+function parseTable(lines,imgW,imgH){
+  const colW=imgW/3;
+  const cols=[[],[],[]];
+  for(const line of lines){
+    const cx=bboxX(line);
+    const ci=Math.min(2,Math.max(0,Math.floor(cx/colW)));
+    cols[ci].push(line);
+  }
+  const cars=[];
+  for(let c=0;c<3;c++){
+    const col=cols[c].slice().sort((a,b)=>bboxY(a)-bboxY(b));
+    const rowH=Math.max(22,imgH/16*0.55);
+    const rows=[];
+    for(const line of col){
+      const y=bboxY(line);let placed=false;
+      for(const row of rows){if(Math.abs(row.y-y)<rowH){row.lines.push(line);placed=true;break;}}
+      if(!placed)rows.push({y,lines:[line]});
+    }
+    for(const row of rows){
+      let track=null,carNo=null,type=null;
+      for(const l of row.lines){
+        const txt=l.text||'';
+        if(!track)track=matchTrack(txt);
+        if(!carNo)carNo=matchCarNo(txt);
+        if(!type)type=matchType(txt);
+      }
+      if(type&&type!=='里程修'&&carNo){
+        cars.push({track:track||carNo+(c===0?'A':c===1?'B':'C'),carNo,type,score:SCORES[type]||0,col:c});
+      }
+    }
+  }
+  return cars;
+}
+
+function loadImage(file){return new Promise((res,rej)=>{const img=new Image();img.onload=()=>res(img);img.onerror=rej;img.src=URL.createObjectURL(file);});}
+
+document.getElementById('fileInput').addEventListener('change',async(e)=>{
+  const files=[...e.target.files];if(!files.length)return;
+  if(!ocrReady){alert('模型还在加载，请稍候');return;}
+  const allCars=[];
+  for(let i=0;i<files.length;i++){
+    setStatus(`识别中 ${i+1}/${files.length}：${files[i].name}`);
+    const img=await loadImage(files[i]);
+    const result=await ocr.recognize(img);
+    const lines=result.lines||result.words||[];
+    const cars=parseTable(lines,img.width,img.height);
+    allCars.push(...cars);
+  }
+  setStatus(`识别完成，共 ${allCars.length} 辆，请核对后点"一键自动分配"`);
+  renderTable(allCars);
+});
+
+function renderTable(cars){
+  const tbody=document.querySelector('#dataTable tbody');tbody.innerHTML='';
+  cars.forEach((car)=>addRow(car));
+  document.getElementById('tableCard').style.display='block';
+  updateTotal();
+}
+
+function addRow(car={track:'',carNo:'',type:'八日检'}){
+  const tbody=document.querySelector('#dataTable tbody');
+  const tr=document.createElement('tr');
+  tr.innerHTML=`
+    <td><input class="cell" data-f="track" value="${car.track||''}"></td>
+    <td><input class="cell" data-f="carNo" value="${car.carNo||''}"></td>
+    <td><select data-f="type">
+      ${TYPE_KEYS.map(k=>`<option value="${k}" ${k===car.type?'selected':''}>${k}</option>`).join('')}
+      <option value="里程修" ${car.type==='里程修'?'selected':''}>里程修(不参与)</option>
+    </select></td>
+    <td class="score-cell">${SCORES[car.type]||0}</td>
+    <td><span class="row-del">删除</span></td>`;
+  tbody.appendChild(tr);
+  tr.querySelector('[data-f=type]').addEventListener('change',e=>{
+    const v=e.target.value;tr.querySelector('.score-cell').textContent=v==='里程修'?0:(SCORES[v]||0);updateTotal();
+  });
+  tr.querySelector('.row-del').addEventListener('click',()=>{tr.remove();updateTotal();});
+  tr.querySelectorAll('input.cell').forEach(i=>i.addEventListener('input',updateTotal));
+}
+
+document.getElementById('addRowBtn').addEventListener('click',()=>{addRow();document.getElementById('tableCard').style.display='block';updateTotal();});
+
+function getColFromTrack(t){if(t.endsWith('A'))return 0;if(t.endsWith('B'))return 1;if(t.endsWith('C'))return 2;return 0;}
+
+function updateTotal(){
+  const cars=getCarsFromTable();
+  const total=cars.reduce((s,c)=>s+c.score,0);
+  document.getElementById('totalInfo').textContent=`共 ${cars.length} 辆，合计 ${total.toFixed(1)} 分`;
+}
+
+function getCarsFromTable(){
+  const cars=[];
+  document.querySelectorAll('#dataTable tbody tr').forEach(tr=>{
+    const track=tr.querySelector('[data-f=track]').value.trim();
+    const carNo=tr.querySelector('[data-f=carNo]').value.trim();
+    const type=tr.querySelector('[data-f=type]').value;
+    if(type&&type!=='里程修'&&carNo)cars.push({track,carNo,type,score:SCORES[type]||0,col:getColFromTrack(track)});
+  });
+  return cars;
+}
+
+function assignCars(cars){
+  const segA=cars.filter(c=>c.col===0);
+  const segB=cars.filter(c=>c.col===1);
+  const segC=cars.filter(c=>c.col===2);
+  const segASimple=segA.filter(c=>['八日检','日检C','自检'].includes(c.type));
+  const segAHard=segA.filter(c=>['日检A','日检B'].includes(c.type));
+  const keyOf=c=>c.carNo+'#'+c.track;
+
+  // 段A：A段中八日检/日检C/自检凑3~4分，不够补日检B
+  const gA=[];let sA=0;
+  segASimple.sort((a,b)=>a.score-b.score);
+  for(const c of segASimple){if(sA+c.score<=4.5){gA.push(c);sA+=c.score;}}
+  if(sA<3){segAHard.filter(c=>c.type==='日检B').sort((a,b)=>a.score-b.score);for(const c of segAHard){if(c.type==='日检B'&&sA+c.score<=4.5){gA.push(c);sA+=c.score;if(sA>=3)break;}}}
+  if(sA<3){for(const c of segAHard){if(c.type==='日检A'&&sA+c.score<=5){gA.push(c);sA+=c.score;break;}}}
+
+  const used=new Set(gA.map(keyOf));
+  const remainA=segA.filter(c=>!used.has(keyOf(c)));
+
+  // 驻站：A段剩余(主要日检A/B)+B段，凑4~5分
+  const pool=[...remainA,...segB].sort((a,b)=>b.score-a.score);
+  const gS=[];let sS=0;
+  for(const c of pool){
+    if(sS+c.score<=5.5){gS.push(c);sS+=c.score;}
+    if(sS>=4)break;
+  }
+  if(sS<4){for(const c of pool){if(!gS.includes(c)){gS.push(c);sS+=c.score;break;}}}
+  const usedS=new Set(gS.map(keyOf));
+
+  // 段B+C：剩余车辆
+  const remain=cars.filter(c=>!used.has(keyOf(c))&&!usedS.has(keyOf(c)));
+  let gB=remain.filter(c=>c.col===1);
+  let gC=remain.filter(c=>c.col===2);
+  gB.push(...remain.filter(c=>c.col===0));//A段剩余给B
+
+  let sB=gB.reduce((s,c)=>s+c.score,0);
+  let sC=gC.reduce((s,c)=>s+c.score,0);
+
+  // 平衡B/C，差值≤1
+  for(let iter=0;iter<30&&Math.abs(sB-sC)>1;iter++){
+    if(sB>sC){
+      const cand=gB.filter(c=>c.col!==0).sort((a,b)=>a.score-b.score);
+      let moved=false;
+      for(const c of cand){
+        if(Math.abs((sB-c.score)-(sC+c.score))<Math.abs(sB-sC)){
+          gB=gB.filter(x=>x!==c);gC.push(c);sB-=c.score;sC+=c.score;moved=true;break;
+        }
+      }
+      if(!moved)break;
+    }else{
+      const cand=gC.filter(c=>c.col!==2).sort((a,b)=>a.score-b.score);
+      let moved=false;
+      for(const c of cand){
+        if(Math.abs((sC-c.score)-(sB+c.score))<Math.abs(sB-sC)){
+          gC=gC.filter(x=>x!==c);gB.push(c);sC-=c.score;sB+=c.score;moved=true;break;
+        }
+      }
+      if(!moved)break;
+    }
+  }
+  return{groupA:{cars:gA,score:sA},station:{cars:gS,score:sS},groupB:{cars:gB,score:sB},groupC:{cars:gC,score:sC}};
+}
+
+document.getElementById('assignBtn').addEventListener('click',()=>{
+  const cars=getCarsFromTable();
+  if(!cars.length){alert('请先识别或添加车辆');return;}
+  const r=assignCars(cars);
+  renderResult(r);
+});
+
+function tagClass(t){return t==='日检A'?'tag-a':t==='日检B'?'tag-b':t==='日检C'?'tag-c':t==='八日检'?'tag-8':'tag-z';}
+
+function renderResult(r){
+  const groups=[
+    {name:'段A（2人）',data:r.groupA,target:'目标3-4分'},
+    {name:'驻站+搭档（2人）',data:r.station,target:'目标4-5分'},
+    {name:'段B（2人）',data:r.groupB,target:'与段C分值差≤1'},
+    {name:'段C（2人）',data:r.groupC,target:'与段B分值差≤1'}
+  ];
+  let html='';
+  for(const g of groups){
+    html+=`<div class="group-title">${g.name}<span class="score">${g.data.score.toFixed(1)}分 · ${g.data.cars.length}辆 · ${g.target}</span></div>`;
+    html+='<table><thead><tr><th>股道</th><th>车号</th><th>类型</th><th>分值</th></tr></thead><tbody>';
+    for(const c of g.data.cars)html+=`<tr><td>${c.track}</td><td>${c.carNo}</td><td><span class="tag ${tagClass(c.type)}">${c.type}</span></td><td>${c.score}</td></tr>`;
+    if(!g.data.cars.length)html+='<tr><td colspan="4" style="color:#999">无</td></tr>';
+    html+='</tbody></table>';
+  }
+  const diff=Math.abs(r.groupB.score-r.groupC.score);
+  html+=`<div style="margin-top:10px;padding:8px;background:${diff<=1?'#f6ffed':'#fff2f0'};border-radius:6px">
+    段B ${r.groupB.score.toFixed(1)}分 vs 段C ${r.groupC.score.toFixed(1)}分，差值 <span class="${diff<=1?'ok':'warn'}">${diff.toFixed(1)}分</span> ${diff<=1?'✓ 符合要求':''}
+  </div>`;
+  document.getElementById('resultContent').innerHTML=html;
+  document.getElementById('resultCard').style.display='block';
+  document.getElementById('resultCard').scrollIntoView({behavior:'smooth'});
+}
+
+document.getElementById('copyBtn').addEventListener('click',()=>{
+  let txt='';
+  document.querySelectorAll('#resultContent .group-title').forEach(t=>{
+    txt+='\n【'+t.textContent.trim()+'】\n';
+    const table=t.nextElementSibling;
+    if(table){table.querySelectorAll('tbody tr').forEach(tr=>{const cells=[...tr.children].map(c=>c.textContent.trim());if(cells.length>=4)txt+=`${cells[0]} ${cells[1]} ${cells[2]}(${cells[3]}分)\n`;});}
+  });
+  navigator.clipboard.writeText(txt.trim()).then(()=>alert('已复制到剪贴板')).catch(()=>{
+    const ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();alert('已复制');
+  });
+});
+</script>
+</body>
+</html>
