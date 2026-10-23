@@ -279,7 +279,25 @@ document.getElementById('fileInput').addEventListener('change',async(e)=>{
   setStatus(`✅ 识别完成，共 ${allCars.length} 辆，请核对后点"一键自动分配"`);
   setStep(2);
   renderTable(allCars);
+  renderDebug(lines,allCars);
 });
+
+function renderDebug(lines,cars){
+  // 按y排序显示每个OCR文字块及匹配结果
+  const sorted=lines.slice().sort((a,b)=>bboxY(a)-bboxY(b));
+  let html='<details open style="margin-top:12px;background:#fff8e1;border:1px solid #ffe082;border-radius:8px;padding:8px 12px"><summary style="cursor:pointer;font-weight:600;color:#e65100">🔍 OCR原始识别（调试用，共'+lines.length+'个文字块）</summary><div style="margin-top:8px;font-size:13px;line-height:1.8">';
+  sorted.forEach((l,i)=>{
+    const txt=l.text||'';
+    const all=txt.replace(/\s/g,'');
+    const tr=matchTrack(all),cn=matchCarNo(all),ty=matchType(all);
+    const y=Math.round(bboxY(l));
+    html+=`<div style="border-bottom:1px solid #eee;padding:2px 0"><b>#${i+1}</b>(y:${y}) <span style="color:#555">"${txt}"</span> → 股道:<span style="${tr?'color:#2e7d32':'color:#c62828'}">${tr||'(空)'}</span> 车号:<span style="color:#1565c0">${cn||'(空)'}</span> 类型:<span style="color:#6a1b9a">${ty||'(空)'}</span></div>`;
+  });
+  html+='</div></details>';
+  const old=document.getElementById('debugPanel');if(old)old.remove();
+  const div=document.createElement('div');div.id='debugPanel';div.innerHTML=html;
+  document.getElementById('tableCard').appendChild(div);
+}
 
 function tagClass(t){return t==='日检A'?'tag-a':t==='日检B'?'tag-b':t==='日检C'?'tag-c':t==='八日检'?'tag-8':'tag-z';}
 
