@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<title>电客车智能工具集</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:#f0f2f5;height:100vh;overflow:hidden;display:flex;flex-direction:column}
+.header{background:linear-gradient(135deg,#1677ff,#0958d9);color:#fff;padding:10px 12px;box-shadow:0 2px 6px rgba(22,119,255,.2)}
+.header h1{font-size:15px;font-weight:600;margin-bottom:8px}
+.tabs{display:flex;gap:4px}
+.tab{flex:1;padding:8px 0;font-size:13px;text-align:center;background:rgba(255,255,255,.15);border-radius:6px 6px 0 0;cursor:pointer;transition:all .2s;color:rgba(255,255,255,.85);font-weight:500}
+.tab.active{background:#fff;color:#1677ff;font-weight:600;box-shadow:0 -2px 4px rgba(0,0,0,.05)}
+.tab .dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:4px;background:#ffc53d}
+.tab .dot.ok{background:#52c41a}
+.iframe-wrap{flex:1;position:relative;background:#fff;overflow:hidden}
+.iframe-wrap iframe{position:absolute;inset:0;width:100%;height:100%;border:0;display:none;background:#fff}
+.iframe-wrap iframe.active{display:block}
+.loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#999;font-size:13px;z-index:1;background:#fff}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>🚇 电客车智能工具集</h1>
+  <div class="tabs">
+    <div class="tab active" data-tab="energy">📊 能耗录入</div>
+    <div class="tab" data-tab="assign">🔧 日检分配</div>
+  </div>
+</div>
+<div class="iframe-wrap">
+  <div class="loading" id="loading">⏳ 首次加载模型约20MB，加载后切换秒开…</div>
+  <iframe id="energy" src="./index.html"></iframe>
+  <iframe id="assign" src="./daily-assign.html"></iframe>
+</div>
+<script>
+const tabs=document.querySelectorAll('.tab');
+const iframes=document.querySelectorAll('.iframe-wrap iframe');
+const loading=document.getElementById('loading');
+let loaded={energy:false,assign:false};
+
+function switchTab(name){
+  tabs.forEach(t=>t.classList.toggle('active',t.dataset.tab===name));
+  iframes.forEach(f=>{
+    const active=f.id===name;
+    f.classList.toggle('active',active);
+  });
+  // 切换时如果 iframe 已加载过就隐藏 loading
+  if(loaded[name]&&loading)loading.style.display='none';
+}
+
+tabs.forEach(t=>t.onclick=()=>switchTab(t.dataset.tab));
+
+// 监听两个 iframe 加载完成
+iframes.forEach(f=>{
+  f.addEventListener('load',()=>{
+    loaded[f.id]=true;
+    if(!document.querySelector('.tab[data-tab="energy"].active')||loaded.energy){
+      if(loading)loading.style.display='none';
+    }
+    // 更新 tab 状态为 ok
+    const tab=document.querySelector(`.tab[data-tab="${f.id}"]`);
+    if(tab)tab.classList.add('ok-loaded');
+  });
+});
+
+// 3秒后隐藏 loading（以防 load 事件在 OCR init 之前触发）
+setTimeout(()=>{if(loading)loading.style.display='none';},3000);
+</script>
+</body>
+</html>

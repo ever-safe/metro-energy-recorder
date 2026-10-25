@@ -1,0 +1,308 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>日检车辆智能分配工具</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#f0f2f5;--card:#fff;--primary:#1677ff;
+  --a:#1677ff;--b:#722ed1;--c:#13c2c2;--d:#fa8c16;
+  --text:#1f2937;--sub:#6b7280;--line:#eef0f3;--radius:12px;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px}
+/* 头部 */
+.header{background:linear-gradient(135deg,#1677ff 0%,#722ed1 100%);color:#fff;padding:16px 14px 18px}
+.header h1{font-size:18px;font-weight:700;margin-bottom:3px}
+.header p{font-size:12px;opacity:.85;line-height:1.5}
+.steps{display:flex;gap:6px;margin-top:14px}
+.step{flex:1;background:rgba(255,255,255,.18);border-radius:8px;padding:7px 4px;text-align:center;font-size:11px;border:1px solid rgba(255,255,255,.25)}
+.step.active{background:rgba(255,255,255,.4);border-color:rgba(255,255,255,.6);font-weight:600}
+.step .num{display:inline-block;width:16px;height:16px;line-height:16px;border-radius:50%;background:rgba(255,255,255,.25);font-size:10px;margin-right:2px}
+.container{padding:10px;max-width:900px;margin:0 auto}
+/* 卡片 */
+.card{background:var(--card);border-radius:var(--radius);padding:12px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.card-title{font-size:14px;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.card-title::before{content:'';width:3px;height:14px;border-radius:2px;background:var(--primary);display:inline-block}
+/* 统计 */
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:10px}
+.stat{background:linear-gradient(135deg,#f8faff,#f0f5ff);border-radius:10px;padding:10px 12px;border:1px solid #e6f0ff}
+.stat .label{font-size:11px;color:var(--sub);margin-bottom:3px}
+.stat .val{font-size:20px;font-weight:700}
+.stat.total .val{color:var(--primary)}
+/* 上传区 */
+.upload-area{border:2px dashed #d0d7e2;border-radius:10px;padding:24px 12px;text-align:center;background:#fafbfc;cursor:pointer;transition:.15s}
+.upload-area:active{border-color:var(--primary);background:#f0f5ff}
+.upload-area .icon{font-size:32px;margin-bottom:6px}
+.upload-area .t1{font-size:13px;font-weight:600;color:var(--primary)}
+.upload-area .t2{font-size:11px;color:var(--sub);margin-top:3px}
+/* 按钮 */
+.btn-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 16px;border:none;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;transition:.15s;white-space:nowrap}
+.btn-primary{background:linear-gradient(135deg,#1677ff,#4096ff);color:#fff;box-shadow:0 2px 6px rgba(22,119,255,.3)}
+.btn-primary:active{transform:scale(.97)}
+.btn-default{background:#f5f5f5;color:var(--text);border:1px solid var(--line)}
+.btn-success{background:linear-gradient(135deg,#52c41a,#73d13d);color:#fff;box-shadow:0 2px 6px rgba(82,196,26,.3)}
+/* 状态 */
+.status{margin-top:10px;padding:9px 12px;border-radius:8px;font-size:12px;background:#f0f5ff;color:var(--primary);line-height:1.5}
+.status.err{background:#fff2f0;color:#ff4d4f}
+/* 表格 */
+.table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:8px;border:1px solid var(--line)}
+table{width:100%;border-collapse:collapse;font-size:13px;min-width:360px}
+thead th{background:#fafafa;font-weight:600;padding:9px 6px;border-bottom:1px solid var(--line);color:var(--sub);white-space:nowrap}
+tbody td{padding:7px 6px;border-bottom:1px solid var(--line);text-align:center}
+tbody tr:last-child td{border-bottom:none}
+input.cell,select{padding:5px 6px;border:1px solid #e5e7eb;border-radius:6px;font-size:13px;width:100%;background:#fff;text-align:center}
+input.cell:focus,select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 2px rgba(22,119,255,.12)}
+.row-del{color:#ff4d4f;cursor:pointer;font-size:12px}
+/* 标签 */
+.tag{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;white-space:nowrap}
+.tag-a{background:#fff1f0;color:#cf1322}
+.tag-b{background:#fff7e6;color:#d46b08}
+.tag-c{background:#fffbe6;color:#d48806}
+.tag-8{background:#e6fffb;color:#08979c}
+.tag-z{background:#f6ffed;color:#389e0d}
+/* 分组结果 */
+.result-grid{display:grid;grid-template-columns:1fr;gap:10px}
+@media(min-width:600px){.result-grid{grid-template-columns:repeat(2,1fr)}}
+.group-card{border-radius:var(--radius);overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.group-head{padding:10px 12px;color:#fff;display:flex;justify-content:space-between;align-items:center}
+.group-head .name{font-weight:600;font-size:14px}
+.group-head .sub{font-size:11px;opacity:.85;margin-top:1px}
+.group-head .score{text-align:right;font-size:13px;font-weight:600}
+.group-head .score small{font-size:10px;opacity:.85;font-weight:400}
+.group-body{padding:8px;background:#fff}
+.group-body table{font-size:12px;min-width:0}
+.group-body td{padding:4px 3px}
+.ga .group-head{background:linear-gradient(135deg,#1677ff,#4096ff)}
+.gb .group-head{background:linear-gradient(135deg,#722ed1,#9254de)}
+.gc .group-head{background:linear-gradient(135deg,#13c2c2,#36cfc9)}
+.gd .group-head{background:linear-gradient(135deg,#fa8c16,#ffa940)}
+.bar{height:5px;background:#f0f0f0;border-radius:3px;margin-top:8px;overflow:hidden}
+.bar-inner{height:100%;border-radius:3px;transition:width .5s}
+/* 均衡提示 */
+.balance{margin-top:12px;padding:12px;border-radius:10px;text-align:center;font-size:13px;font-weight:500;line-height:1.6}
+.balance.ok{background:linear-gradient(135deg,#f6ffed,#d9f7be);color:#389e0d;border:1px solid #b7eb8f}
+.balance.warn{background:linear-gradient(135deg,#fff2f0,#ffccc7);color:#cf1322;border:1px solid #ffa39e}
+/* 空 */
+.empty{text-align:center;padding:16px;color:#bfbfbf;font-size:13px}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>🚇 日检车辆智能分配工具</h1>
+  <p>批量识别日检表图片，自动按分值均衡分配到各作业段</p>
+  <div class="steps">
+    <div class="step active"><span class="num">1</span>上传图片</div>
+    <div class="step"><span class="num">2</span>核对数据</div>
+    <div class="step"><span class="num">3</span>一键分配</div>
+  </div>
+</div>
+<div class="container">
+  <div class="card">
+    <div class="card-title">上传日检表图片</div>
+    <label class="upload-area" for="fileInput">
+      <div class="icon">📷</div>
+      <div class="t1">点击选择图片（可多选）</div>
+      <div class="t2">支持DCC下发的日检车股道表截图</div>
+    </label>
+    <input type="file" id="fileInput" accept="image/*" multiple style="display:none">
+    <div class="btn-row">
+      <button class="btn btn-default" id="addRowBtn">+ 手动添加车辆</button>
+    </div>
+    <div class="status" id="status">正在加载识别模型，请稍候…</div>
+  </div>
+  <div class="card" id="tableCard" style="display:none">
+    <div class="card-title">识别结果核对</div>
+    <div class="stats" id="miniStats"></div>
+    <div class="table-wrap">
+    <table id="dataTable">
+      <thead><tr><th>股道</th><th>车号</th><th>日检类型</th><th>分值</th><th>操作</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    </div>
+    <div class="btn-row" style="justify-content:flex-end">
+      <button class="btn btn-success" id="assignBtn">⚡ 一键自动分配</button>
+    </div>
+  </div>
+  <div class="card" id="resultCard" style="display:none">
+    <div class="card-title">分配结果</div>
+    <div class="result-grid" id="resultGrid"></div>
+    <div class="balance" id="balanceBox"></div>
+    <div class="btn-row" style="justify-content:center;margin-top:12px">
+      <button class="btn btn-primary" id="copyBtn">📋 复制分配结果</button>
+    </div>
+  </div>
+</div>
+<script type="importmap">
+{ "imports": { "onnxruntime-web": "./ort.min.mjs" } }
+</script>
+<script type="module">
+import { createPPOcrV5 } from "./ffocr.mjs";
+const SCORES={'日检A':4,'日检B':2,'日检C':1,'八日检':0.5,'自检':0.5};
+const TYPE_KEYS=Object.keys(SCORES);
+let ocr=null,ocrReady=false,ocrLoading=false;
+function showBar(txt){const b=document.getElementById('loadBar');if(b){b.style.display='block';b.querySelector('.bar-txt').textContent=txt;}}
+function hideBar(){const b=document.getElementById('loadBar');if(b)b.style.display='none';}
+async function ensureOcr(){
+  if(ocrReady)return ocr;
+  if(ocrLoading){await new Promise(r=>{const t=setInterval(()=>{if(ocrReady){clearInterval(t);r();}},200);});return ocr;}
+  ocrLoading=true;
+  try{
+    setStatus('⏳ 首次加载模型中（需下载15-35MB，之后秒开）...');
+    showBar('📥 正在下载识别模型，请耐心等待（已优化，约30-120秒）');
+    ocr=createPPOcrV5({
+      baseUrl:"./models",modelVariant:"mobile",
+      detectionModelPath:"det_mobile.onnx",recognitionModelPath:"rec_mobile.onnx",
+      dictionaryUrl:"./models/ppocrv5_dict.txt",
+      wasmPaths:"./wasm/",cacheModels:true,providerPreference:"wasm",wasmThreads:1,
+    });
+    await ocr.init();ocrReady=true;hideBar();
+    setStatus('✅ 模型加载完成，可选择图片识别');
+  }catch(e){hideBar();setStatus('❌ 模型加载失败：'+e.message+' 请确保手机联网',true);ocrLoading=false;}
+  return ocr;
+}
+// 删掉原 initOcr() 自动调用
+function setStatus(msg,isErr){const el=document.getElementById('status');el.textContent=msg;el.className='status'+(isErr?' err':'');}
+function setStep(n){document.querySelectorAll('.step').forEach((s,i)=>s.classList.toggle('active',i<=n-1));}
+function matchType(t){
+  t=t.replace(/\s/g,'');
+  if(/八/.test(t)&&/日/.test(t))return'八日检';
+  if(/自/.test(t)&&/检/.test(t))return'自检';
+  if(/日[检檢]?\s*A/.test(t)||/日\s*A/.test(t))return'日检A';
+  if(/日[检檢]?\s*B/.test(t)||/日\s*B/.test(t))return'日检B';
+  if(/日[检檢]?\s*C/.test(t)||/日\s*C/.test(t))return'日检C';
+  if(/里程/.test(t))return'里程修';
+  return null;
+}
+function matchCarNo(t){const m=t.match(/01(\d{2})/);if(m){const n=parseInt(m[1]);if(n>=1&&n<=67)return'01'+m[1];}return null;}
+function matchTrack(t){const m=t.match(/(\d{1,2})\s*([ABC])/);if(m)return(m[1].padStart(2,'0'))+m[2];return null;}
+function bboxY(line){const ys=line.bbox.map(p=>p[1]??p.y);return Math.min(...ys);}
+function bboxX(line){const xs=line.bbox.map(p=>p[0]??p.x);return(Math.min(...xs)+Math.max(...xs))/2;}
+function parseTable(lines,imgW,imgH){
+  const colW=imgW/3;
+  const cols=[[],[],[]];
+  for(const line of lines){
+    const cx=bboxX(line);
+    const ci=Math.min(2,Math.max(0,Math.floor(cx/colW)));
+    cols[ci].push(line);
+  }
+  const cars=[];
+  for(let c=0;c<3;c++){
+    const col=cols[c].slice().sort((a,b)=>bboxY(a)-bboxY(b));
+    const rowH=Math.max(22,imgH/16*0.55);
+    const rows=[];
+    for(const line of col){
+      const y=bboxY(line);let placed=false;
+      for(const row of rows){if(Math.abs(row.y-y)<rowH){row.lines.push(line);placed=true;break;}}
+      if(!placed)rows.push({y,lines:[line]});
+    }
+    for(const row of rows){
+      let track=null,carNo=null,type=null;
+      for(const l of row.lines){
+        const txt=l.text||'';
+        if(!track)track=matchTrack(txt);
+        if(!carNo)carNo=matchCarNo(txt);
+        if(!type)type=matchType(txt);
+      }
+      if(type&&type!=='里程修'&&carNo){
+        cars.push({track:track||carNo+(c===0?'A':c===1?'B':'C'),carNo,type,score:SCORES[type]||0,col:c});
+      }
+    }
+  }
+  return cars;
+}
+function loadImage(file){return new Promise((res,rej)=>{const img=new Image();img.onload=()=>res(img);img.onerror=rej;img.src=URL.createObjectURL(file);});}
+document.getElementById('fileInput').addEventListener('change',async(e)=>{
+  const files=[...e.target.files];if(!files.length)return;
+  await ensureOcr();
+  const allCars=[];
+  for(let i=0;i<files.length;i++){
+    setStatus(`⏳ 识别中 ${i+1}/${files.length}：${files[i].name}`);
+    const img=await loadImage(files[i]);
+    const result=await ocr.recognize(img);
+    const lines=result.lines||result.words||[];
+    const cars=parseTable(lines,img.width,img.height);
+    allCars.push(...cars);
+  }
+  setStatus(`✅ 识别完成，共 ${allCars.length} 辆，请核对后点"一键自动分配"`);
+  setStep(2);
+  renderTable(allCars);
+});
+function tagClass(t){return t==='日检A'?'tag-a':t==='日检B'?'tag-b':t==='日检C'?'tag-c':t==='八日检'?'tag-8':'tag-z';}
+function renderTable(cars){
+  const tbody=document.querySelector('#dataTable tbody');tbody.innerHTML='';
+  cars.forEach((car)=>addRow(car));
+  document.getElementById('tableCard').style.display='block';
+  updateMiniStats();
+}
+function addRow(car={track:'',carNo:'',type:'八日检'}){
+  const tbody=document.querySelector('#dataTable tbody');
+  const tr=document.createElement('tr');
+  tr.innerHTML=`
+    <td><input class="cell" data-f="track" value="${car.track||''}"></td>
+    <td><input class="cell" data-f="carNo" value="${car.carNo||''}"></td>
+    <td><select data-f="type">
+      ${TYPE_KEYS.map(k=>`<option value="${k}" ${k===car.type?'selected':''}>${k}</option>`).join('')}
+      <option value="里程修" ${car.type==='里程修'?'selected':''}>里程修(不参与)</option>
+    </select></td>
+    <td><span class="tag ${tagClass(car.type)}">${SCORES[car.type]||0}</span></td>
+    <td><span class="row-del">删除</span></td>`;
+  tbody.appendChild(tr);
+  tr.querySelector('[data-f=type]').addEventListener('change',e=>{
+    const v=e.target.value;const tag=tr.querySelector('.tag');tag.textContent=v==='里程修'?0:(SCORES[v]||0);tag.className='tag '+tagClass(v);updateMiniStats();
+  });
+  tr.querySelector('.row-del').addEventListener('click',()=>{tr.remove();updateMiniStats();});
+  tr.querySelectorAll('input.cell').forEach(i=>i.addEventListener('input',updateMiniStats));
+}
+document.getElementById('addRowBtn').addEventListener('click',()=>{addRow();document.getElementById('tableCard').style.display='block';updateMiniStats();});
+function getColFromTrack(t){if(t.endsWith('A'))return 0;if(t.endsWith('B'))return 1;if(t.endsWith('C'))return 2;return 0;}
+function updateMiniStats(){
+  const cars=getCarsFromTable();
+  const total=cars.reduce((s,c)=>s+c.score,0);
+  const byType={};cars.forEach(c=>byType[c.type]=(byType[c.type]||0)+1);
+  let html=`<div class="stat total"><div class="label">车辆总数</div><div class="val">${cars.length}</div></div>`;
+  html+=`<div class="stat"><div class="label">总分值</div><div class="val">${total.toFixed(1)}</div></div>`;
+  for(const t of TYPE_KEYS){html+=`<div class="stat"><div class="label">${t}</div><div class="val" style="font-size:18px">${byType[t]||0}</div></div>`;}
+  document.getElementById('miniStats').innerHTML=html;
+}
+function getCarsFromTable(){
+  const cars=[];
+  document.querySelectorAll('#dataTable tbody tr').forEach(tr=>{
+    const track=tr.querySelector('[data-f=track]').value.trim();
+    const carNo=tr.querySelector('[data-f=carNo]').value.trim();
+    const type=tr.querySelector('[data-f=type]').value;
+    if(type&&type!=='里程修'&&carNo)cars.push({track,carNo,type,score:SCORES[type]||0,col:getColFromTrack(track)});
+  });
+  return cars;
+}
+function assignCars(cars){
+  const segA=cars.filter(c=>c.col===0);
+  const segB=cars.filter(c=>c.col===1);
+  const segC=cars.filter(c=>c.col===2);
+  const segASimple=segA.filter(c=>['八日检','日检C','自检'].includes(c.type));
+  const segAHard=segA.filter(c=>['日检A','日检B'].includes(c.type));
+  const keyOf=c=>c.carNo+'#'+c.track;
+  const gA=[];let sA=0;
+  segASimple.sort((a,b)=>a.score-b.score);
+  for(const c of segASimple){if(sA+c.score<=4.5){gA.push(c);sA+=c.score;}}
+  if(sA<3){for(const c of segAHard){if(c.type==='日检B'&&sA+c.score<=4.5){gA.push(c);sA+=c.score;if(sA>=3)break;}}}
+  if(sA<3){for(const c of segAHard){if(c.type==='日检A'&&sA+c.score<=5){gA.push(c);sA+=c.score;break;}}}
+  const used=new Set(gA.map(keyOf));
+  const remainA=segA.filter(c=>!used.has(keyOf(c)));
+  const pool=[...remainA,...segB].sort((a,b)=>b.score-a.score);
+  const gS=[];let sS=0;
+  for(const c of pool){if(sS+c.score<=5.5){gS.push(c);sS+=c.score;}if(sS>=4)break;}
+  if(sS<4){for(const c of pool){if(!gS.includes(c)){gS.push(c);sS+=c.score;break;}}}
+  const usedS=new Set(gS.map(keyOf));
+  const remain=cars.filter(c=>!used.has(keyOf(c))&&!usedS.has(keyOf(c)));
+  let gB=remain.filter(c=>c.col===1);
+  let gC=remain.filter(c=>c.col===2);
+  gB.push(...remain.filter(c=>c.col===0));
+  let sB=gB.reduce((s,c)=>s+c.score,0);
+  let sC=gC.reduce((s,c)=>s+c.score,0);
+  for(let iter=0;iter<30&&Math.abs(sB-sC)>1;iter++){
+    if(sB>sC){
+      const cand=gB.filter(c=>c.col!==0).sort((a,b)=>a.score-b.score);let moved=false;
+
