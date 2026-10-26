@@ -67,10 +67,10 @@
   <button id="copy" style="background:#0a8a52">复制当天列（0101-0167）</button>
 </div>
 <script type="importmap">
-{ "imports": { "onnxruntime-web": "https://cdn.jsdelivr.net/gh/ever-safe/metro-energy-recorder@main/ort.min.mjs" } }
+{ "imports": { "onnxruntime-web": "./ort.min.mjs" } }
 </script>
 <script type="module">
-import { createPPOcrV5 } from "https://cdn.jsdelivr.net/gh/ever-safe/metro-energy-recorder@main/ffocr.mjs";
+import { createPPOcrV5 } from "./ffocr.mjs";
 if("serviceWorker" in navigator){
   navigator.serviceWorker.register("./sw.js").catch(()=>{});
 }
@@ -93,12 +93,11 @@ function prevRec(date,car){
 const _d=new Date();
 document.getElementById("day").value=`${_d.getFullYear()}-${String(_d.getMonth()+1).padStart(2,"0")}-${String(_d.getDate()).padStart(2,"0")}`;
 const prog=document.getElementById("prog");
-const _BASE="https://cdn.jsdelivr.net/gh/ever-safe/metro-energy-recorder@main";
 const _ocrInst=createPPOcrV5({
-  baseUrl:_BASE+"/models",modelVariant:"mobile",
+  baseUrl:"./models",modelVariant:"mobile",
   detectionModelPath:"det_mobile.onnx",recognitionModelPath:"rec_mobile.onnx",
-  dictionaryUrl:_BASE+"/models/ppocrv5_dict.txt",
-  wasmPaths:_BASE+"/wasm/",cacheModels:true,providerPreference:"wasm",
+  dictionaryUrl:"./models/ppocrv5_dict.txt",
+  wasmPaths:"./wasm/",cacheModels:true,providerPreference:"wasm",
   wasmThreads:self.crossOriginIsolated?Math.min(navigator.hardwareConcurrency||4,8):1,
 });
 let _ocrReady=false,_ocrPromise=null;
