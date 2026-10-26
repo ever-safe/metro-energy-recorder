@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
@@ -136,10 +136,10 @@ input.cell:focus,select:focus{outline:none;border-color:var(--primary);box-shado
   </div>
 </div>
 <script type="importmap">
-{ "imports": { "onnxruntime-web": "./ort.min.mjs" } }
+{ "imports": { "onnxruntime-web": "https://cdn.jsdelivr.net/gh/ever-safe/metro-energy-recorder@main/ort.min.mjs" } }
 </script>
 <script type="module">
-import { createPPOcrV5 } from "./ffocr.mjs";
+import { createPPOcrV5 } from "https://cdn.jsdelivr.net/gh/ever-safe/metro-energy-recorder@main/ffocr.mjs";
 const SCORES={'日检A':4,'日检B':2,'日检C':1,'八日检':0.5,'自检':0.5};
 const TYPE_KEYS=Object.keys(SCORES);
 let ocr=null,ocrReady=false,ocrLoading=false;
@@ -152,11 +152,12 @@ async function ensureOcr(){
   try{
     setStatus('⏳ 首次加载模型中（需下载15-35MB，之后秒开）...');
     showBar('📥 正在下载识别模型，请耐心等待（已优化，约30-120秒）');
+    const _BASE2="https://cdn.jsdelivr.net/gh/ever-safe/metro-energy-recorder@main";
     ocr=createPPOcrV5({
-      baseUrl:"./models",modelVariant:"mobile",
+      baseUrl:_BASE2+"/models",modelVariant:"mobile",
       detectionModelPath:"det_mobile.onnx",recognitionModelPath:"rec_mobile.onnx",
-      dictionaryUrl:"./models/ppocrv5_dict.txt",
-      wasmPaths:"./wasm/",cacheModels:true,providerPreference:"wasm",wasmThreads:1,
+      dictionaryUrl:_BASE2+"/models/ppocrv5_dict.txt",
+      wasmPaths:_BASE2+"/wasm/",cacheModels:true,providerPreference:"wasm",wasmThreads:1,
     });
     await ocr.init();ocrReady=true;hideBar();
     setStatus('✅ 模型加载完成，可选择图片识别');
